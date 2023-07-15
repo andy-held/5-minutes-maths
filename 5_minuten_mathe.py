@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import absolute_import
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum
 import time
 from imgui.integrations.pygame import PygameRenderer
@@ -27,19 +27,13 @@ class Task:
     b: int
     c: int
 
-
-KEYMAP = {
-    pygame.K_0: '0',
-    pygame.K_1: '1',
-    pygame.K_2: '2',
-    pygame.K_3: '3',
-    pygame.K_4: '4',
-    pygame.K_5: '5',
-    pygame.K_6: '6',
-    pygame.K_7: '7',
-    pygame.K_8: '8',
-    pygame.K_9: '9'
-}
+    def check(self, guess):
+        if self.hidden_number == HiddenNumber.HIDA:
+            return guess == self.a
+        elif self.hidden_number == HiddenNumber.HIDB:
+            return guess == self.b
+        elif self.hidden_number == HiddenNumber.HIDC:
+            return guess == self.c
 
 
 game_time = 5*60. # 5 minutes per game
@@ -50,49 +44,22 @@ nof_tasks = 50
 class State:
     game_running: bool = False
     start_time: float = 0
-    task: Task = None
-    guess: str = '_'
-    tasks_done: int = 0
-    tasks_correct: int = 0
+    tasks: list[Task] = field(default_factory=list)
+    guesses: list[int] = field(default_factory=list)
 
     def new_round(self):
-        self.tasks_done = 0
-        self.tasks_correct = 0
+        self.tasks
         self.game_running = True
         self.start_time = time.time()
-        self.new_task()
-
-    def new_task(self):
-        self.task = generate_task()
-        self.guess = '_'
-
-    def solved_one(self, was_correct):
-        self.tasks_done += 1
-        if was_correct:
-            self.tasks_correct += 1
-            
-        if self.tasks_done >= nof_tasks:
-            self.game_running = False
+        self.tasks = [generate_task() for _ in range(nof_tasks)]
+        self.guesses = [-1]*nof_tasks
 
     def tick(self):
         if time.time() - self.start_time > game_time:
             self.game_running = False
-            
-    def check_guess(self):
-        guess = int(self.guess)
-        task = self.task
-        hidden_number = task.hidden_number
-        if hidden_number == HiddenNumber.HIDA:
-            return guess == task.a
-        elif hidden_number == HiddenNumber.HIDB:
-            return guess == task.b
-        elif hidden_number == HiddenNumber.HIDC:
-            return guess == task.c
 
-
-    def task_string(self):
-        operator = '+' if self.task.plus else '-'
-        task = self.task
+    def task_string(self, task: Task):
+        operator = '+' if task.plus else '-'
         hidden_number = task.hidden_number
         if hidden_number == HiddenNumber.HIDA:
             return f'{self.guess} {operator} {task.b} = {task.c}'
@@ -100,15 +67,15 @@ class State:
             return f'{task.a} {operator} {self.guess} = {task.c}'
         elif hidden_number == HiddenNumber.HIDC:
             return f'{task.a} {operator} {task.b} = {self.guess}'
-        
 
     def result_string(self):
-        return f'{self.tasks_correct} richtig von {nof_tasks}'
+        solved_tasks = np.sum([task.check(guess) for task, guess in zip(self.tasks, self.guesses)])
+        return f'{solved_tasks} richtig von {nof_tasks}'
 
 
 def main():
     pygame.init()
-    size = 800, 600
+    size = 1200, 800
 
     pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE)
 
@@ -120,53 +87,85 @@ def main():
 
     state = State()
 
+    MAIN_WINDOW_FLAGS = imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_DECORATION
+
+    def draw_task(i, size):
+        task = state.tasks[i]
+        guess = state.guesses[i]
+
+        def draw_input():
+            imgui.push_item_width(30)
+            changed, int_val = imgui.input_int(f'##input_hidden{i}', guess, 0, 0)
+            if changed:
+                state.guesses[i] = int_val
+            imgui.pop_item_width()
+
+        with imgui.begin_child(f'task{i}', *size, True, MAIN_WINDOW_FLAGS):
+            operator = '+' if task.plus else '-'
+            if task.hidden_number == HiddenNumber.HIDA:
+                draw_input()
+                imgui.same_line()
+                imgui.text(f'{operator} {task.b} = {task.c}')
+            elif task.hidden_number == HiddenNumber.HIDB:
+                imgui.text(f'{task.a} {operator}')
+                imgui.same_line()
+                draw_input()
+                imgui.same_line()
+                imgui.text(f'= {task.c}')
+            elif task.hidden_number == HiddenNumber.HIDC:
+                imgui.text(f'{task.a} {operator} {task.b} =')
+                imgui.same_line()
+                draw_input()
+
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 sys.exit(0)
-            if state.game_running:
-                if event.type == pygame.KEYDOWN:
-                    if event.key in KEYMAP.keys():
-                        if state.guess == '_':
-                            state.guess = ''
-                        state.guess += KEYMAP[event.key]
-                    elif event.key == pygame.K_BACKSPACE:
-                        if state.guess:
-                            state.guess = state.guess[:-1]
-                        if not state.guess:
-                            state.guess = '_'
-                    elif event.key == pygame.K_RETURN:
-                        state.solved_one(state.check_guess())
-                        state.new_task()
 
             impl.process_event(event)
         impl.process_inputs()
 
         imgui.new_frame()
 
-        if imgui.begin_main_menu_bar():
-            if imgui.begin_menu('File', True):
+        imgui.push_style_var(imgui.STYLE_FRAME_ROUNDING, imgui.get_window_width()*0.02)
+
+        with imgui.begin_main_menu_bar():
+            with imgui.begin_menu('File', True):
 
                 if imgui.menu_item('Start Game', 'Enter')[0]:
                     state.new_round()
 
                 if imgui.menu_item('Quit', 'Ctrl+Q')[0]:
                     sys.exit(0)
+                menu_height = imgui.get_window_height()
 
-                imgui.end_menu()
-            imgui.end_main_menu_bar()
+        imgui.set_next_window_position(0, menu_height)
+        imgui.set_next_window_size(io.display_size.x, io.display_size.y - menu_height)
+        with imgui.begin('main_window', flags=MAIN_WINDOW_FLAGS):
 
-        if state.game_running:
-            with imgui.begin('Aufgabe'):
-                imgui.text(state.task_string())
-                
-            state.tick()
-        elif state.task is not None:
-            with imgui.begin('Ergebnis'):
-                imgui.text(state.result_string())
+            window_size = np.array(imgui.get_window_size())
+            padding = imgui.get_style().item_spacing
 
-        #         imgui.text_colored('Eggs', 0.2, 1.0, 0.0)
-        
+            if state.game_running:
+                tasks_per_col = 10
+                tasks_per_line = nof_tasks/tasks_per_col
+                task_window_size = ((window_size - padding)/np.array([tasks_per_line, tasks_per_col])).astype(int)-padding
+                for i in range(nof_tasks):
+                    draw_task(i, task_window_size)
+                    if i%(tasks_per_line) != (tasks_per_line-1):
+                        imgui.same_line(spacing=padding[0])
+                state.tick()
+
+            else:
+                if state.guesses:
+                        imgui.text(state.result_string())
+                button_size = window_size*0.1
+                imgui.set_cursor_pos(window_size*0.5 - button_size*0.5)
+                if imgui.button('Start Game', *button_size):
+                    state.new_round()
+
+        imgui.pop_style_var()
+
         gl.glClearColor(1, 1, 1, 1)
         gl.glClear(gl.GL_COLOR_BUFFER_BIT)
         imgui.render()
@@ -188,7 +187,7 @@ def generate_task():
     else:
         b = get_rand_up_to(a)
         c = a - b
-    
+
     return Task(plus_task, hidden_number, a, b, c)
 
 
