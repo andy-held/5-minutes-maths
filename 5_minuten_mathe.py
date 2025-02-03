@@ -52,7 +52,7 @@ class State:
         self.game_running = True
         self.start_time = time.time()
         self.tasks = [generate_task() for _ in range(nof_tasks)]
-        self.guesses = [-1]*nof_tasks
+        self.guesses = ['']*nof_tasks
 
     def tick(self):
         if time.time() - self.start_time > game_time:
@@ -75,7 +75,7 @@ class State:
 
 def main():
     pygame.init()
-    size = 1200, 800
+    size = 1600, 1000
 
     pygame.display.set_mode(size, pygame.DOUBLEBUF | pygame.OPENGL | pygame.RESIZABLE)
 
@@ -84,6 +84,10 @@ def main():
 
     io = imgui.get_io()
     io.display_size = size
+
+    font = io.fonts.add_font_from_file_ttf('fonts/OpenSans/static/OpenSans-Bold.ttf', 20)
+    font_big = io.fonts.add_font_from_file_ttf('fonts/OpenSans/static/OpenSans-Bold.ttf', 50)
+    impl.refresh_font_texture()
 
     state = State()
 
@@ -94,27 +98,30 @@ def main():
         guess = state.guesses[i]
 
         def draw_input():
-            imgui.push_item_width(30)
-            changed, int_val = imgui.input_int(f'##input_hidden{i}', guess, 0, 0)
+            imgui.same_line()
+            imgui.align_text_to_frame_padding()
+            imgui.push_item_width(60)
+            changed, int_val = imgui.input_text(f'##input_hidden{i}', str(guess), flags=imgui.INPUT_TEXT_CHARS_DECIMAL)
             if changed:
-                state.guesses[i] = int_val
+                state.guesses[i] = int(int_val)
             imgui.pop_item_width()
+
+        def padding_aligned_text(*args, **kwargs):
+            imgui.same_line()
+            imgui.align_text_to_frame_padding()
+            imgui.text(*args, **kwargs)
 
         with imgui.begin_child(f'task{i}', *size, True, MAIN_WINDOW_FLAGS):
             operator = '+' if task.plus else '-'
             if task.hidden_number == HiddenNumber.HIDA:
                 draw_input()
-                imgui.same_line()
-                imgui.text(f'{operator} {task.b} = {task.c}')
+                padding_aligned_text(f'{operator} {task.b} = {task.c}')
             elif task.hidden_number == HiddenNumber.HIDB:
-                imgui.text(f'{task.a} {operator}')
-                imgui.same_line()
+                padding_aligned_text(f'{task.a} {operator}')
                 draw_input()
-                imgui.same_line()
-                imgui.text(f'= {task.c}')
+                padding_aligned_text(f'= {task.c}')
             elif task.hidden_number == HiddenNumber.HIDC:
-                imgui.text(f'{task.a} {operator} {task.b} =')
-                imgui.same_line()
+                padding_aligned_text(f'{task.a} {operator} {task.b} =')
                 draw_input()
 
     while True:
@@ -128,6 +135,7 @@ def main():
         imgui.new_frame()
 
         imgui.push_style_var(imgui.STYLE_FRAME_ROUNDING, imgui.get_window_width()*0.02)
+        imgui.push_font(font)
 
         with imgui.begin_main_menu_bar():
             with imgui.begin_menu('File', True):
@@ -147,6 +155,7 @@ def main():
             padding = imgui.get_style().item_spacing
 
             if state.game_running:
+                imgui.push_font(font_big)
                 tasks_per_col = 10
                 tasks_per_line = nof_tasks/tasks_per_col
                 task_window_size = ((window_size - padding)/np.array([tasks_per_line, tasks_per_col])).astype(int)-padding
@@ -155,15 +164,17 @@ def main():
                     if i%(tasks_per_line) != (tasks_per_line-1):
                         imgui.same_line(spacing=padding[0])
                 state.tick()
+                imgui.pop_font()
 
             else:
                 if state.guesses:
                         imgui.text(state.result_string())
-                button_size = window_size*0.1
+                button_size = window_size*0.15
                 imgui.set_cursor_pos(window_size*0.5 - button_size*0.5)
                 if imgui.button('Start Game', *button_size):
                     state.new_round()
 
+        imgui.pop_font()
         imgui.pop_style_var()
 
         gl.glClearColor(1, 1, 1, 1)
@@ -172,6 +183,7 @@ def main():
         impl.render(imgui.get_draw_data())
 
         pygame.display.flip()
+
 
 
 def generate_task():
