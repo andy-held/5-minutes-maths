@@ -19,9 +19,16 @@ class HiddenNumber(Enum):
     HIDC = 2
 
 
+class TaskType(Enum):
+    ADDITION = 0
+    SUBTRACTION = 1
+    MULTIPLICATION = 2
+    DIVISION = 3
+
+
 @dataclass
 class Task:
-    plus: bool
+    type: TaskType
     hidden_number: HiddenNumber
     a: int
     b: int
@@ -39,6 +46,13 @@ class Task:
 game_time = 5*60. # 5 minutes per game
 nof_tasks = 50
 
+
+TASK_TYPE_TO_OPERATOR = {
+    TaskType.ADDITION: '+',
+    TaskType.SUBTRACTION: '-',
+    TaskType.DIVISION: ':',
+    TaskType.MULTIPLICATION: '·'
+}
 
 @dataclass
 class State:
@@ -59,7 +73,7 @@ class State:
             self.game_running = False
 
     def task_string(self, task: Task):
-        operator = '+' if task.plus else '-'
+        operator = TASK_TYPE_TO_OPERATOR[task.type]
         hidden_number = task.hidden_number
         if hidden_number == HiddenNumber.HIDA:
             return f'{self.guess} {operator} {task.b} = {task.c}'
@@ -112,7 +126,7 @@ def main():
             imgui.text(*args, **kwargs)
 
         with imgui.begin_child(f'task{i}', *size, True, MAIN_WINDOW_FLAGS):
-            operator = '+' if task.plus else '-'
+            operator = TASK_TYPE_TO_OPERATOR[task.type]
             if task.hidden_number == HiddenNumber.HIDA:
                 draw_input()
                 padding_aligned_text(f'{operator} {task.b} = {task.c}')
@@ -187,20 +201,29 @@ def main():
 
 
 def generate_task():
-    get_rand_up_to = lambda n: int(np.random.rand()*(n+1))
+    task_type = np.random.choice(list(TaskType))
+    hidden_number = HiddenNumber.HIDC
+    if (task_type in [TaskType.ADDITION, TaskType.SUBTRACTION]):
+        hidden_number = np.random.choice(list(HiddenNumber))
 
-    hidden_number = HiddenNumber(get_rand_up_to(2))
-    plus_task = np.random.rand() > 0.5
-
-    a = get_rand_up_to(20)
-    if plus_task:
-        b = get_rand_up_to(20-a)
+    if task_type == TaskType.ADDITION:
+        a = np.random.randint(1, 1000)
+        b = np.random.randint(1, 1000 - a)
         c = a + b
-    else:
-        b = get_rand_up_to(a)
+    elif task_type == TaskType.SUBTRACTION:
+        a = np.random.randint(1, 1000)
+        b = np.random.randint(1, a)  # Ensure non-negative results
         c = a - b
+    elif task_type == TaskType.MULTIPLICATION:
+        a = np.random.randint(1, 20)
+        b = np.random.randint(1, 10)
+        c = a * b
+    elif task_type == TaskType.DIVISION:
+        b = np.random.randint(1, 20)
+        c = np.random.randint(1, 10)
+        a = b * c  # Ensure real division without remainder
 
-    return Task(plus_task, hidden_number, a, b, c)
+    return Task(type=task_type, hidden_number=hidden_number, a=a, b=b, c=c)
 
 
 if __name__ == '__main__':
