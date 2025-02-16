@@ -1,0 +1,33 @@
+import imgui
+
+def theme(style):
+    colors = style.colors  # Access color dictionary
+
+    colors[imgui.COLOR_TEXT]                  = (0.00, 0.00, 0.00, 1.00)
+    colors[imgui.COLOR_TEXT_DISABLED]         = (0.60, 0.60, 0.60, 1.00)
+    colors[imgui.COLOR_WINDOW_BACKGROUND]     = (1., 1., 1., 1.)
+    colors[imgui.COLOR_BORDER]                = (0.70, 0.70, 0.70, 1.00)
+    colors[imgui.COLOR_BORDER_SHADOW]         = (0.80, 0.80, 0.80, 0.50)
+    colors[imgui.COLOR_FRAME_BACKGROUND]      = (0.90, 0.90, 0.90, 1.00)
+    colors[imgui.COLOR_FRAME_BACKGROUND_HOVERED] = (0.85, 0.85, 0.85, 1.00)
+    colors[imgui.COLOR_FRAME_BACKGROUND_ACTIVE]  = (0.80, 0.80, 0.80, 1.00)
+    colors[imgui.COLOR_TITLE_BACKGROUND]      = (0.96, 0.96, 0.96, 1.00)
+    colors[imgui.COLOR_TITLE_BACKGROUND_ACTIVE] = (0.82, 0.82, 0.82, 1.00)
+    colors[imgui.COLOR_BUTTON]                = (0.26, 0.59, 0.98, 0.40)
+    colors[imgui.COLOR_BUTTON_HOVERED]        = (0.26, 0.59, 0.98, 1.00)
+    colors[imgui.COLOR_BUTTON_ACTIVE]         = (0.06, 0.53, 0.98, 1.00)
+    colors[imgui.COLOR_HEADER]                = (0.26, 0.59, 0.98, 0.31)
+    colors[imgui.COLOR_HEADER_HOVERED]        = (0.26, 0.59, 0.98, 0.80)
+    colors[imgui.COLOR_HEADER_ACTIVE]         = (0.26, 0.59, 0.98, 1.00)
+    colors[imgui.COLOR_SCROLLBAR_BACKGROUND]  = (0.98, 0.98, 0.98, 0.53)
+    colors[imgui.COLOR_SCROLLBAR_GRAB]        = (0.69, 0.69, 0.69, 0.80)
+    colors[imgui.COLOR_SCROLLBAR_GRAB_HOVERED] = (0.49, 0.49, 0.49, 0.80)
+    colors[imgui.COLOR_SCROLLBAR_GRAB_ACTIVE] = (0.49, 0.49, 0.49, 1.00)
+    colors[imgui.COLOR_SLIDER_GRAB]           = (0.26, 0.59, 0.98, 0.78)
+    colors[imgui.COLOR_SLIDER_GRAB_ACTIVE]    = (0.26, 0.59, 0.98, 1.00)
+    colors[imgui.COLOR_PLOT_LINES]            = (0.39, 0.39, 0.39, 1.00)
+    colors[imgui.COLOR_PLOT_LINES_HOVERED]    = (1.00, 0.43, 0.35, 1.00)
+    colors[imgui.COLOR_PLOT_HISTOGRAM]        = (0.90, 0.70, 0.00, 1.00)
+    colors[imgui.COLOR_PLOT_HISTOGRAM_HOVERED] = (1.00, 0.60, 0.00, 1.00)
+    colors[imgui.COLOR_TEXT_SELECTED_BACKGROUND] = (0.26, 0.59, 0.98, 0.35)
+    colors[imgui.COLOR_MODAL_WINDOW_DIM_BACKGROUND] = (0.20, 0.20, 0.20, 0.35)

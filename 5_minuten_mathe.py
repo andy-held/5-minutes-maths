@@ -103,6 +103,9 @@ def main():
     font_big = io.fonts.add_font_from_file_ttf('fonts/OpenSans/static/OpenSans-Bold.ttf', 50)
     impl.refresh_font_texture()
 
+    from theme import theme
+    theme(imgui.get_style())
+
     state = State()
 
     MAIN_WINDOW_FLAGS = imgui.WINDOW_NO_MOVE | imgui.WINDOW_NO_DECORATION
