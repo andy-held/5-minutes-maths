@@ -2,3 +2,4 @@ imgui==2.0.0
 numpy==2.2.2
 pygame==2.6.1
 PyOpenGL==3.1.9
+PyYAML==6.0.2
