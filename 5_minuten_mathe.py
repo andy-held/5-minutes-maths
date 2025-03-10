@@ -171,19 +171,10 @@ def main():
                              imgui.get_window_width()*0.02)
         imgui.push_font(font)
 
-        with imgui.begin_main_menu_bar():
-            with imgui.begin_menu('Datei', True):
 
-                if imgui.menu_item('Spiel starten', 'Enter')[0]:
-                    state = State()
-
-                if imgui.menu_item('Beenden', 'Strg+Q')[0]:
-                    sys.exit(0)
-                menu_height = imgui.get_window_height()
-
-        imgui.set_next_window_position(0, menu_height)
+        imgui.set_next_window_position(0, 0)
         imgui.set_next_window_size(
-            io.display_size.x, io.display_size.y - menu_height)
+            io.display_size.x, io.display_size.y)
 
         with imgui.begin('main_window', flags=MAIN_WINDOW_FLAGS):
 
