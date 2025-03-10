@@ -16,22 +16,25 @@ import OpenGL.GL as gl
 import pygame
 import yaml
 
-from tasks import Task, TASK_TYPE_TO_OPERATOR, Problem, HiddenNumber, generate_task
+from tasks import Task, TASK_TYPE_TO_OPERATOR, Problem, HiddenNumber, generate_random_task, generate_multiplication, generate_addition_subtraction, generate_multiplication_division
 
 
 GAME_TIME = 5*60.  # 5 minutes per game
 
 
+TASK_GENERATOR = generate_random_task
+
+
 @dataclass
 class State:
     start_time: float = time.time()
-    tasks: list[Task] = field(default_factory=lambda: [generate_task()])
+    tasks: list[Task] = field(default_factory=lambda: [TASK_GENERATOR()])
 
     def current_task(self) -> Task:
         return self.tasks[-1]
 
     def new_task(self):
-        self.tasks.append(generate_task())
+        self.tasks.append(TASK_GENERATOR())
 
     def submit_guess(self, guess):
         self.current_task().guess = guess
@@ -194,11 +197,29 @@ def main():
                 draw_task(task.problem, task_window_size)
                 imgui.pop_font()
             else:
+                global TASK_GENERATOR
                 if last_result:
                     imgui.text(last_result)
                 button_size = window_size*0.15
-                imgui.set_cursor_pos(window_size*0.5 - button_size*0.5)
-                if imgui.button('Spiel starten', *button_size):
+
+                imgui.set_cursor_pos(window_size*np.array([0.33, 0.33]) - button_size*0.5)
+                if imgui.button('Zufällige\nAufgaben', *button_size):
+                    TASK_GENERATOR = generate_random_task
+                    state = State()
+
+                imgui.set_cursor_pos(window_size*np.array([0.33, 0.66]) - button_size*0.5)
+                if imgui.button('Ein-Mal-Eins', *button_size):
+                    TASK_GENERATOR = generate_multiplication
+                    state = State()
+
+                imgui.set_cursor_pos(window_size*np.array([0.66, 0.33]) - button_size*0.5)
+                if imgui.button('Plus und Minus', *button_size):
+                    TASK_GENERATOR = generate_addition_subtraction
+                    state = State()
+
+                imgui.set_cursor_pos(window_size*np.array([0.66, 0.66]) - button_size*0.5)
+                if imgui.button('Mal und Durch', *button_size):
+                    TASK_GENERATOR = generate_multiplication_division
                     state = State()
 
         imgui.pop_font()
