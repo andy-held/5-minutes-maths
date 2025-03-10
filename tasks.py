@@ -50,11 +50,35 @@ TASK_TYPE_TO_OPERATOR = {
 }
 
 
-def generate_task():
-    problem_type = np.random.choice(list(_ProblemType))
-    hidden_number = HiddenNumber.C
-    if problem_type in [_ProblemType.ADDITION, _ProblemType.SUBTRACTION]:
-        hidden_number = np.random.choice(list(HiddenNumber))
+def generate_multiplication():
+    b = np.random.randint(1, 10)
+    a = np.random.randint(1, 20)
+    if a > 10:
+        b = np.random.randint(1, 6)
+    c = a * b
+    return Task(
+        Problem(
+            _ProblemType.MULTIPLICATION,
+            HiddenNumber.C,
+            a, b, c)
+    )
+
+
+def generate_division():
+    b = np.random.randint(1, 10)
+    c = np.random.randint(1, 10)
+    a = b * c
+    return Task(
+        Problem(
+            _ProblemType.DIVISION,
+            HiddenNumber.C,
+            a, b, c)
+    )
+
+
+def generate_addition_subtraction():
+    hidden_number = np.random.choice(list(HiddenNumber))
+    problem_type = np.random.choice([_ProblemType.ADDITION, _ProblemType.SUBTRACTION])
 
     if problem_type == _ProblemType.ADDITION:
         a = np.random.randint(1, 1000)
@@ -64,20 +88,27 @@ def generate_task():
         a = np.random.randint(1, 1000)
         b = np.random.randint(1, a)
         c = a - b
-    elif problem_type == _ProblemType.MULTIPLICATION:
-        b = np.random.randint(1, 10)
-        a = np.random.randint(1, 20)
-        if a > 10:
-            b = np.random.randint(1, 6)
-        c = a * b
-    elif problem_type == _ProblemType.DIVISION:
-        b = np.random.randint(1, 10)
-        c = np.random.randint(1, 10)
-        a = b * c
-
     return Task(
         Problem(
             problem_type,
             hidden_number,
-            a,b, c)
+            a, b, c)
     )
+
+
+def generate_multiplication_division():
+    problem_type = np.random.choice([_ProblemType.MULTIPLICATION, _ProblemType.DIVISION])
+    if problem_type == _ProblemType.MULTIPLICATION:
+        return generate_multiplication()
+    elif problem_type == _ProblemType.DIVISION:
+        return generate_division()
+
+
+def generate_random_task():
+    problem_type = np.random.choice(list(_ProblemType))
+    if problem_type in [_ProblemType.ADDITION, _ProblemType.SUBTRACTION]:
+       return generate_addition_subtraction()
+    elif problem_type == _ProblemType.MULTIPLICATION:
+        return generate_multiplication()
+    elif problem_type == _ProblemType.DIVISION:
+        return generate_division()
