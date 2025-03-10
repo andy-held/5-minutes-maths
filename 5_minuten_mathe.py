@@ -16,67 +16,22 @@ import OpenGL.GL as gl
 import pygame
 import yaml
 
-
-class HiddenNumber(Enum):
-    A = 0
-    B = 1
-    C = 2
+from tasks import Task, TASK_TYPE_TO_OPERATOR, Problem, HiddenNumber, generate_task
 
 
-class ProblemType(Enum):
-    ADDITION = 0
-    SUBTRACTION = 1
-    MULTIPLICATION = 2
-    DIVISION = 3
-
-
-@dataclass
-class Problem:
-    type: ProblemType
-    hidden_number: HiddenNumber
-    a: int
-    b: int
-    c: int
-
-    def check(self, guess):
-        if self.hidden_number == HiddenNumber.A:
-            return guess == self.a
-        elif self.hidden_number == HiddenNumber.B:
-            return guess == self.b
-        elif self.hidden_number == HiddenNumber.C:
-            return guess == self.c
-
-
-@dataclass
-class Task:
-    problem: Problem
-    guess: int | None = None
-
-    def solved(self):
-        return self.problem.check(self.guess)
-
-
-game_time = 5*5.  # 5 minutes per game
-
-
-TASK_TYPE_TO_OPERATOR = {
-    ProblemType.ADDITION: '+',
-    ProblemType.SUBTRACTION: '-',
-    ProblemType.DIVISION: ':',
-    ProblemType.MULTIPLICATION: '·'
-}
+GAME_TIME = 5*60.  # 5 minutes per game
 
 
 @dataclass
 class State:
     start_time: float = time.time()
-    tasks: list[Task] = field(default_factory=lambda: [Task(generate_problem())])
+    tasks: list[Task] = field(default_factory=lambda: [generate_task()])
 
     def current_task(self) -> Task:
         return self.tasks[-1]
 
     def new_task(self):
-        self.tasks.append(Task(generate_problem()))
+        self.tasks.append(generate_task())
 
     def submit_guess(self, guess):
         self.current_task().guess = guess
@@ -186,7 +141,7 @@ def main():
     def tick():
         if state is None:
             return
-        if time.time() - state.start_time > game_time:
+        if time.time() - state.start_time > GAME_TIME:
             raise GameOver
 
     while True:
@@ -254,34 +209,6 @@ def main():
         imgui.render()
         impl.render(imgui.get_draw_data())
         pygame.display.flip()
-
-
-def generate_problem():
-    problem_type = np.random.choice(list(ProblemType))
-    hidden_number = HiddenNumber.C
-    if problem_type in [ProblemType.ADDITION, ProblemType.SUBTRACTION]:
-        hidden_number = np.random.choice(list(HiddenNumber))
-
-    if problem_type == ProblemType.ADDITION:
-        a = np.random.randint(1, 1000)
-        b = np.random.randint(1, 1000 - a)
-        c = a + b
-    elif problem_type == ProblemType.SUBTRACTION:
-        a = np.random.randint(1, 1000)
-        b = np.random.randint(1, a)
-        c = a - b
-    elif problem_type == ProblemType.MULTIPLICATION:
-        b = np.random.randint(1, 10)
-        a = np.random.randint(1, 20)
-        if a > 10:
-            b = np.random.randint(1, 6)
-        c = a * b
-    elif problem_type == ProblemType.DIVISION:
-        b = np.random.randint(1, 10)
-        c = np.random.randint(1, 10)
-        a = b * c
-
-    return Problem(type=problem_type, hidden_number=hidden_number, a=a, b=b, c=c)
 
 
 if __name__ == '__main__':
